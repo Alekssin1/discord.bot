@@ -3,9 +3,13 @@ from discord.ext import commands
 import music
 from googleapiclient.discovery import build
 import config
+import levelsys
 import random
+import giphy_client
+from giphy_client.rest import ApiException
 
 cogs = [music]
+cgs = [levelsys]
 client = commands.Bot(command_prefix=config.PREFIX, intents =
 discord.Intents.all())
 client.remove_command('help')
@@ -45,6 +49,7 @@ async def help(ctx):
     emb.add_field(name='{}play'.format(config.PREFIX), value='Проигрывание музыки по ссылке с ютуба')
     emb.add_field(name='{}pause'.format(config.PREFIX), value='Ставит проигрование на паузу')
     emb.add_field(name='{}resume'.format(config.PREFIX), value='Продолжает проигрование')
+    emb.add_field(name='{}showgif'.format(config.PREFIX), value = 'Поиск гифки по названию')
     await ctx.send(embed=emb)
 
 
@@ -77,6 +82,21 @@ async def deadinside(ctx):
         i -= 7
         await ctx.send(f'{k}-7 ={i}')
 
+@client.command(pass_context = True)
+async def showgif(ctx, *, q = 'Smile'):
+
+    api_key = '0rN4DtOylokGA8WKqqy1u9GnORBAeRfc'
+    api_istance = giphy_client.DefaultApi()
+    try:
+        api_responce = api_istance.gifs_search_get(api_key, q, limit = 5, rating = 'r')
+        lst = list(api_responce.data)
+        giff = random.choice(lst)
+        embs = discord.Embed(title = f'Я тут слегка порылся в ящике, вот то что ты просил {q}')
+        embs.set_image(url = f'https://media.giphy.com/media/{giff.id}/giphy.gif')
+
+        await ctx.channel.send(embed = embs)
+    except ApiException as e:
+        print("Exeption when calling Api")
 
 @client.command(pass_context=True)
 @commands.has_permissions(kick_members=True)
@@ -157,6 +177,9 @@ async def on_member_join(member):
     welcomeEmbed.set_author(name=member.name, icon_url=member.avatar_url)
     await channel.send(embed=welcomeEmbed)
 
+
 for i in range(len(cogs)):
     cogs[i].setup(client)
+for i in range(len(cgs)):
+    print("YAY")
 client.run(config.TOKEN)
